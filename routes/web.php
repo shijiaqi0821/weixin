@@ -14,6 +14,8 @@
 Route::get('/', function () {
     return view('welcome');
 });
+//git推送到github后浏览器自动拉取pull
+Route::any('/Gitpull', 'Git\Gitpull@pull');
 
 Route::prefix('wechat')->group(function () {
     Route::any('/', 'Admin\Wechat@index');
