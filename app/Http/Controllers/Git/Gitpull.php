@@ -12,5 +12,7 @@ class Gitpull extends Controller
         $cmd="cd /data/wwwroot/default/laraveltest && git pull";
         shell_exec($cmd);
     }
-
+    function pulla(){
+        echo "啦啦啦";
+    }
 }
