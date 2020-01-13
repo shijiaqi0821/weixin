@@ -53,6 +53,12 @@
                         </a>
                     </li>
                     <li>
+                        <a class="J_menuItem" href="{{url('/wechat/mass')}}">
+                            <i class="fa fa-flask"></i>
+                            <span class="nav-label">群发</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="#">
                             <i class="fa fa fa-bar-chart-o"></i>
                             <span class="nav-label">素材管理</span>

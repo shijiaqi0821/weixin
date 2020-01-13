@@ -21,7 +21,8 @@ class Wechat extends Controller
     ];
 
     public function index(){
-        //提交按钮 微信服务器GET请求=> echostr  原样输出echostr即可
+
+//        提交按钮 微信服务器GET请求=> echostr  原样输出echostr即可
 //        $echostr = request()->echostr;
 //        echo $echostr;die;
 
@@ -41,6 +42,7 @@ class Wechat extends Controller
 //            <EventKey><![CDATA[qrscene_112]]></EventKey>
 //            <Ticket><![CDATA[gQG28DwAAAAAAAAAAS5odHRwOi8vd2VpeGluLnFxLmNvbS9xLzAyZFpFVmNJZXJmRDExYUctWE51YzcAAgSqMRReAwQAjScA]]></Ticket>
 //        </xml>
+
         //如果关注
         if($xmlobj->MsgType=='event' && $xmlobj->Event=='subscribe'){
             //获取某渠道关注人数
@@ -88,6 +90,7 @@ class Wechat extends Controller
 //            <Event><![CDATA[unsubscribe]]></Event>
 //            <EventKey><![CDATA[]]></EventKey>
 //        </xml>
+
         //取消关注
         if($xmlobj->MsgType=='event' && $xmlobj->Event=='unsubscribe'){
             //用户基本信息表==>修改状态
@@ -103,7 +106,6 @@ class Wechat extends Controller
                 Quick::where('channel_status',$res['channel_status'])->update(['number'=>0]);
             }
         }
-
         //如果用户发送的是文本
         if($xmlobj->MsgType=='text'){
             $content = trim($xmlobj->Content);
@@ -173,31 +175,25 @@ class Wechat extends Controller
                </xml>";
         }
         //如果用户发送的是语音
-        if($xmlobj->MsgType=='image'){
-            $res=Media::where('media_format','=','image')->get()->toArray();
+        if($xmlobj->MsgType=='video'){
+            $res=Media::where('media_format','=','video')->get()->toArray();
+            //dd($res);
             $arr=array_rand($res);
+            //dd($arr);
             $msg=$res[$arr]['wechat_media_id'];
+            $media_name=$res[$arr]['media_name'];
             //dd($msg);
             echo "<xml>
-                 <ToUserName><![CDATA[".$xmlobj->FromUserName."]]></ToUserName>
-                 <FromUserName><![CDATA[".$xmlobj->ToUserName."]]></FromUserName>
-                 <CreateTime>".time()."</CreateTime>
-                 <MsgType><![CDATA[image]]></MsgType>
-                 <Image>
-                 <MediaId><![CDATA[".$msg."]]></MediaId>
-                 </Image>
-               </xml>
-               <xml>
-  <ToUserName><![\".$xmlobj->FromUserName.\"]]></ToUserName>
-  <FromUserName><![CDATA[fromUser]]></FromUserName>
-  <CreateTime>12345678</CreateTime>
-  <MsgType><![CDATA[voice]]></MsgType>
-  <Voice>
-    <MediaId><![CDATA[\".$msg.\"]]></MediaId>
-  </Voice>
-</xml>
-
-";
+                        <ToUserName><![CDATA[".$xmlobj->FromUserName."]]></ToUserName>
+                        <FromUserName><![CDATA[".$xmlobj->ToUserName."]]></FromUserName>
+                        <CreateTime>".time()."</CreateTime>
+                        <MsgType><![CDATA[video]]></MsgType>
+                        <Video>
+                        <MediaId><![CDATA[".$msg."]]></MediaId>
+                        <Title><![CDATA[".$media_name."]]></Title>
+                        <Description><![CDATA[description]]></Description>
+                        </Video>
+                   </xml>";
         }
     }
     //自定义菜单
@@ -240,4 +236,31 @@ class Wechat extends Controller
         $data = Curl::post($url,$postData);
         var_dump($data);
     }
+    //群发视图
+    public function mass(){
+        return view('admin.wechat.mass');
+    }
+    //群发
+    public function masstexting(){
+        $name = request()->name;
+        //dd($name);
+        $res = Status::where('is_del','=',1)->select('openid')->get()->toArray();
+        $openid = array_column($res,'openid');
+        //dd($openid);
+        $access_token = Wechats::getAccessToken();
+        $url = "https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=".$access_token;
+
+        $postData = [
+            "touser"=> $openid,
+            "msgtype"=>"text",
+            "text"=> [
+                "content"=>$name
+            ]
+        ];
+        $postData = json_encode($postData,JSON_UNESCAPED_UNICODE);
+        $data = Curl::post($url,$postData);
+        $data = explode(" ",$data);
+        var_dump($data[0]['errcode']);
+    }
+
 }

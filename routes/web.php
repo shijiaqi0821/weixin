@@ -17,7 +17,9 @@ Route::get('/', function () {
 
 Route::prefix('wechat')->group(function () {
     Route::any('/', 'Admin\Wechat@index');
-    Route::any('/menus', 'Admin\Wechat@menus');
+    Route::any('/menus', 'Admin\Wechat@menus'); //自定义菜单
+    Route::any('/mass', 'Admin\Wechat@mass');   //群发
+    Route::any('/masstexting', 'Admin\Wechat@masstexting');   //群发
 });
 
 //登录模板
@@ -58,7 +60,3 @@ Route::prefix('quick')->group(function () {
     Route::any('store','Admin\Quick@store');//执行添加
     Route::any('graph','Admin\Quick@graph');//图形展示
 });
-//自定义菜单
-//Route::prefix('menus')->group(function () {
-//    Route::any('/','Admin\Menus@index');//展示页面
-//});
