@@ -64,3 +64,7 @@ Route::prefix('quick')->group(function () {
     Route::any('store','Admin\Quick@store');//执行添加
     Route::any('graph','Admin\Quick@graph');//图形展示
 });
+//网页授权
+Route::any('/webpage','Admin\Wechat@webpage');
+//接收code
+Route::any('/auth','Admin\Wechat@auth');

@@ -10,6 +10,7 @@ use App\Model\Media;
 use App\Model\Quick;
 use App\Model\Status;
 use App\Tools\Curl;
+use Redis;
 
 class Wechat extends Controller
 {
@@ -204,6 +205,11 @@ class Wechat extends Controller
         $postData = [
             "button"    => [
                 [
+                    "type"  => "view",
+                    "name"  => "签到",
+                    "url"   => "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxc22a745cff2aeda7&redirect_uri=http%3A%2F%2F1906shijiaqi.comcto.com%2Fauth&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect"
+                ],
+                [
                     "type"  => "location_select",
                     "name"  => "发送位置",
                     "key"   => "rselfmenu_2_0"
@@ -263,4 +269,38 @@ class Wechat extends Controller
         var_dump($data[0]['errcode']);
     }
 
+    //网页授权
+    public function webpage(){
+        $appid=env("WX_APPID");
+        $redirect_uri=urlencode(env('WX_AUTH_REDIRECT_URI'));
+        $url="https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".$redirect_uri."&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect";
+        echo $url;
+    }
+    //接收网页授权code
+    public function auth(){
+        //接收code
+        $code = $_GET['code'];
+        //换取assess_token
+        $url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".env("WX_APPID")."&secret=".env("WX_APPSECRET")."&code=".$code."&grant_type=authorization_code";
+        $data = file_get_contents($url);
+        $arr = json_decode($data,true);
+        print_r($arr);
+
+        //将用户信息保存至Redis HASH中
+        $key = 'h:user_info:'.$arr['openid'];
+        Redis::hMset($key,$arr);
+
+        //获取用户信息
+        $url = "https://api.weixin.qq.com/sns/userinfo?access_token=".$arr['access_token']."&openid=".$arr['openid']."&lang=zh_CN";
+        $datas = file_get_contents($url);
+        $arrs = json_decode($datas,true);
+        print_r($arrs);
+
+        //实现签到功能 记录用户签到
+        $redis_key = 'checkin:'.date('Y-m-d');
+        Redis::zadd($redis_key,time(),$arr['openid']);  //将openID加入有序集合
+        echo $arr['nickname']."签到成功!       "."签到时间:".date("Y-m-d H:i:s");
+
+        $user_list = Redis::zrange($redis_key,0,-1);
+    }
 }
